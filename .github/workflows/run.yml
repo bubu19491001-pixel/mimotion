@@ -1,33 +1,37 @@
 name: 刷步数
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
   schedule:
-    - cron: 0 10 * * *
-  watch:
-    types: started
+    - cron: '0 10 * * *'
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  run:
     runs-on: ubuntu-latest
-    if: github.event.repository.owner.id == github.event.sender.id
+    timeout-minutes: 5
+
+    env:
+      TZ: Asia/Shanghai
 
     steps:
-      - uses: actions/checkout@v2
-      - name: 初始化Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: 开始
-        run: |
-          pip install requests
-          pmode='${{ secrets.PMODE }}'
-          pkey='${{ secrets.PKEY }}'
-          user='${{ secrets.USER }}'
-          pwd='${{ secrets.PWD }}'
-          step='${{ secrets.STEP }}'
+      - uses: actions/checkout@v7
 
-          python3 main.py ${pmode} ${pkey} ${user} ${pwd} ${step}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: python -m pip install requests
+
+      - name: 执行
+        env:
+          MIMOTION_PMODE: ${{ secrets.PMODE }}
+          MIMOTION_PKEY: ${{ secrets.PKEY }}
+          MIMOTION_USER: ${{ secrets.USER }}
+          MIMOTION_PWD: ${{ secrets.PWD }}
+          MIMOTION_STEP: ${{ secrets.STEP }}
+        run: |
+          python main.py "$MIMOTION_PMODE" "$MIMOTION_PKEY" "$MIMOTION_USER" "$MIMOTION_PWD" "$MIMOTION_STEP"
